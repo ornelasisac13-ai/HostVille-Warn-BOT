@@ -33,12 +33,14 @@ const EMOJIS = {
 const TOKEN = process.env.TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const GUILD_ID = process.env.GUILD_ID;
-// STAFF agora direto no código
+
+// STAFF ROLES - Agora usando array (corrigido)
 const STAFF_ROLES = [
   "1392306046655008891",
   "1392306043215679599",
   "1392306051415539774"
 ];
+
 const WARN_1 = process.env.WARN_1;
 const WARN_2 = process.env.WARN_2;
 const WARN_3 = process.env.WARN_3;
@@ -142,7 +144,7 @@ function getWarnLevelIcon(warnCount) {
 }
 
 // ============================================
-// FUNÇÃO PARA BUSCAR NOME DO CARGO STAFF
+// FUNÇÃO PARA BUSCAR NOME DO CARGO STAFF (CORRIGIDA)
 // ============================================
 
 async function getStaffRoleName(client) {
@@ -156,8 +158,9 @@ async function getStaffRoleName(client) {
         const guild = await client.guilds.fetch(GUILD_ID);
         cachedGuild = guild;
         
-        if (STAFF_ROLE_ID && STAFF_ROLE_ID !== 'id_do_cargo_staff') {
-            const role = await guild.roles.fetch(STAFF_ROLE_ID);
+        // CORRIGIDO: Usa o primeiro cargo do array STAFF_ROLES
+        if (STAFF_ROLES && STAFF_ROLES.length > 0) {
+            const role = await guild.roles.fetch(STAFF_ROLES[0]);
             if (role) {
                 cachedStaffRoleName = role.name;
                 return cachedStaffRoleName;
@@ -742,7 +745,7 @@ const commands = [
 ];
 
 // ============================================
-// VERIFICAÇÃO DE PERMISSÃO STAFF - CORRIGIDA COM NOME DO CARGO
+// VERIFICAÇÃO DE PERMISSÃO STAFF - CORRIGIDA COM STAFF_ROLES
 // ============================================
 
 async function checkStaffPermission(interaction) {
@@ -763,18 +766,17 @@ async function checkStaffPermission(interaction) {
             return false;
         }
 
-        // Verificar se STAFF_ROLE_ID está configurado
+        // Verificar se STAFF_ROLES está configurado (CORRIGIDO)
         if (!STAFF_ROLES || STAFF_ROLES.length === 0) {
-            console.log(chalk.bgRed.white(`${EMOJIS.EMOJI_40}[ERRO CONFIG]`) + chalk.red(' STAFF_ROLE_ID não configurado corretamente no .env'));
+            console.log(chalk.bgRed.white(`${EMOJIS.EMOJI_40}[ERRO CONFIG]`) + chalk.red(' STAFF_ROLES não configurado corretamente'));
             
             const errorEmbed = new EmbedBuilder()
                 .setColor('#E74C3C')
                 .setTitle(`${EMOJIS.EMOJI_40} ERRO DE CONFIGURAÇÃO`)
-                .setDescription('O cargo de staff não foi configurado corretamente no arquivo `.env`')
+                .setDescription('Os cargos de staff não foram configurados corretamente no código')
                 .addFields(
-                    { name: '🔧 Solução', value: 'Configure `STAFF_ROLE_ID` com o ID do cargo de staff', inline: false },
-                    { name: '📝 Como obter o ID', value: '1. Ative o Modo Desenvolvedor no Discord\n2. Clique com botão direito no cargo\n3. Copiar ID', inline: false },
-                    { name: '⚙️ Configuração atual', value: `\`${STAFF_ROLE_ID || 'Não definido'}\``, inline: false }
+                    { name: '🔧 Solução', value: 'Configure o array `STAFF_ROLES` com os IDs dos cargos de staff', inline: false },
+                    { name: '📝 Como obter o ID', value: '1. Ative o Modo Desenvolvedor no Discord\n2. Clique com botão direito no cargo\n3. Copiar ID', inline: false }
                 )
                 .setFooter({ text: `${EMOJIS.BOT} Contate um administrador do servidor` })
                 .setTimestamp();
@@ -783,35 +785,34 @@ async function checkStaffPermission(interaction) {
             return false;
         }
 
-        // Buscar o cargo para obter o NOME (não o ID)
-        let staffRole = null;
+        // Buscar o nome do cargo staff para exibição (CORRIGIDO)
         let staffRoleName = 'Cargo Staff';
         
-        try {
-            staffRole = await interaction.guild.roles.fetch(STAFF_ROLE_ID);
-            if (staffRole) {
-                staffRoleName = staffRole.name;
-                console.log(chalk.green(`${EMOJIS.EMOJI_43}[DEBUG] Cargo staff encontrado: ${staffRoleName} (ID: ${STAFF_ROLE_ID})`));
-            } else {
-                console.log(chalk.bgRed.white(`${EMOJIS.EMOJI_40}[ERRO]`) + chalk.red(` Cargo ${STAFF_ROLE_ID} não encontrado no servidor`));
-            }
-        } catch (error) {
-            console.log(chalk.red(`${EMOJIS.EMOJI_40}[ERRO] Falha ao buscar cargo: ${error.message}`));
-        }
-
-        // Verificar se o membro tem o cargo
+        // Verificar se o membro tem QUALQUER UM dos cargos staff
         const memberRoles = member.roles.cache;
-        const hasStaffRole = memberRoles.some(role =>
-  STAFF_ROLES.includes(role.id)
-);
+        const hasStaffRole = memberRoles.some(role => STAFF_ROLES.includes(role.id));
+        
+        // Pegar o nome do primeiro cargo staff que o usuário possui (para exibir)
+        const userStaffRole = memberRoles.find(role => STAFF_ROLES.includes(role.id));
+        if (userStaffRole) {
+            staffRoleName = userStaffRole.name;
+        } else if (STAFF_ROLES.length > 0) {
+            // Fallback: tenta buscar o nome do primeiro cargo da lista
+            try {
+                const firstRole = await interaction.guild.roles.fetch(STAFF_ROLES[0]);
+                if (firstRole) staffRoleName = firstRole.name;
+            } catch (error) {
+                console.log(chalk.red(`${EMOJIS.EMOJI_40}[ERRO] Falha ao buscar cargo: ${error.message}`));
+            }
+        }
         
         // DEBUG - Mostrar informações no console
         console.log(chalk.cyan(`${EMOJIS.GIT}[DEBUG PERMISSÃO]`));
         console.log(chalk.gray(`├─ Usuário: ${member.user.tag}`));
         console.log(chalk.gray(`├─ Cargo Staff Nome: ${staffRoleName}`));
-        console.log(chalk.gray(`├─ Cargo Staff ID: ${STAFF_ROLE_ID}`));
-        console.log(chalk.gray(`├─ Tem o cargo? ${hasStaffRole ? 'SIM ✓' : 'NÃO ✗'}`));
-        console.log(chalk.gray(`├─ Cargos do usuário: ${memberRoles.map(r => `${r.name}`).join(', ') || 'Nenhum'}`));
+        console.log(chalk.gray(`├─ Cargos Staff IDs: ${STAFF_ROLES.join(', ')}`));
+        console.log(chalk.gray(`├─ Tem cargo staff? ${hasStaffRole ? 'SIM ✓' : 'NÃO ✗'}`));
+        console.log(chalk.gray(`├─ Cargos do usuário: ${memberRoles.map(r => `${r.name} (${r.id})`).join(', ') || 'Nenhum'}`));
         
         // Se não tiver o cargo staff - MOSTRA O NOME DO CARGO, NÃO O ID
         if (!hasStaffRole) {
@@ -820,7 +821,7 @@ async function checkStaffPermission(interaction) {
                 .setTitle(`${EMOJIS.EMOJI_40} ACESSO NEGADO`)
                 .setDescription('Você não tem permissão para executar este comando.')
                 .addFields(
-                    { name: '🔑 Cargo Necessário', value: `\`${staffRoleName}\``, inline: true },
+                    { name: '🔑 Cargos Necessários', value: `\`${staffRoleName}\` e/ou outros cargos de staff`, inline: true },
                     { name: `${EMOJIS.STAFF} Seus Cargos`, value: memberRoles.map(r => `\`${r.name}\``).join(', ') || '`Nenhum cargo`', inline: false },
                     { name: '📌 Ação', value: 'Este comando é restrito à equipe de moderação', inline: false }
                 )
@@ -829,7 +830,7 @@ async function checkStaffPermission(interaction) {
                 .setTimestamp();
 
             await interaction.reply({ embeds: [denyEmbed], ephemeral: true });
-            console.log(chalk.bgYellow.black(`${EMOJIS.STAFF_YELLOW}[PERMISSÃO NEGADA]`) + chalk.yellow(` ${member.user.tag} tentou usar ${interaction.commandName} sem o cargo ${staffRoleName}`));
+            console.log(chalk.bgYellow.black(`${EMOJIS.STAFF_YELLOW}[PERMISSÃO NEGADA]`) + chalk.yellow(` ${member.user.tag} tentou usar ${interaction.commandName} sem cargo staff`));
             return false;
         }
 
@@ -895,6 +896,7 @@ async function checkBotPermissionsForAction(interaction, action) {
         return false;
     }
 }
+
 // ============================================
 // HANDLER DO COMANDO /warnstats
 // ============================================
@@ -1418,7 +1420,7 @@ client.once('ready', async () => {
     console.log(chalk.green(`${EMOJIS.BOT}[BOT] Usuários totais: ${chalk.bold(client.guilds.cache.reduce((acc, g) => acc + g.memberCount, 0))}`));
     
     console.log(chalk.cyan('\n[CONFIGURAÇÃO]'));
-    console.log(chalk.gray(`├─ ${EMOJIS.STAFF} STAFF_ROLE_ID: ${STAFF_ROLE_ID && STAFF_ROLE_ID !== 'id_do_cargo_staff' ? '✓ Configurado' : '✗ Não configurado'}`));
+    console.log(chalk.gray(`├─ ${EMOJIS.STAFF} STAFF_ROLES: ${STAFF_ROLES.length > 0 ? '✓ Configurado (' + STAFF_ROLES.length + ' cargos)' : '✗ Não configurado'}`));
     console.log(chalk.gray(`├─ ${EMOJIS.EMOJI_41} WARN_1: ${WARN_1 && WARN_1 !== 'id_do_cargo_warn_1' ? '✓ Configurado' : '✗ Não configurado'}`));
     console.log(chalk.gray(`├─ ${EMOJIS.EMOJI_42} WARN_2: ${WARN_2 && WARN_2 !== 'id_do_cargo_warn_2' ? '✓ Configurado' : '✗ Não configurado'}`));
     console.log(chalk.gray(`├─ ${EMOJIS.EMOJI_40} WARN_3: ${WARN_3 && WARN_3 !== 'id_do_cargo_warn_3' ? '✓ Configurado' : '✗ Não configurado'}`));
