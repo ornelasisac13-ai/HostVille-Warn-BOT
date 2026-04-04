@@ -1,7 +1,7 @@
 // ============================================
 // DISCORD WARN BOT - SISTEMA COMPLETO DE MODERAÇÃO
 // discord.js v14.14.1
-// COM GUILD_ID E NOME DO CARGO NOS EMBEDS
+// COM REMOVEWARN SIMPLIFICADO (REMOVE ÚLTIMO WARN)
 // ============================================
 
 require('dotenv').config();
@@ -34,7 +34,7 @@ const TOKEN = process.env.TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const GUILD_ID = process.env.GUILD_ID;
 
-// STAFF ROLES - Agora usando array (corrigido)
+// STAFF ROLES - Array com IDs dos cargos de staff
 const STAFF_ROLES = [
   "1392306046655008891",
   "1392306043215679599",
@@ -144,7 +144,7 @@ function getWarnLevelIcon(warnCount) {
 }
 
 // ============================================
-// FUNÇÃO PARA BUSCAR NOME DO CARGO STAFF (CORRIGIDA)
+// FUNÇÃO PARA BUSCAR NOME DO CARGO STAFF
 // ============================================
 
 async function getStaffRoleName(client) {
@@ -158,7 +158,6 @@ async function getStaffRoleName(client) {
         const guild = await client.guilds.fetch(GUILD_ID);
         cachedGuild = guild;
         
-        // CORRIGIDO: Usa o primeiro cargo do array STAFF_ROLES
         if (STAFF_ROLES && STAFF_ROLES.length > 0) {
             const role = await guild.roles.fetch(STAFF_ROLES[0]);
             if (role) {
@@ -543,6 +542,7 @@ class PunishmentManager {
         }
     }
 }
+
 // ============================================
 // GERENCIADOR DE LOGS
 // ============================================
@@ -729,14 +729,10 @@ const commands = [
 
     new SlashCommandBuilder()
         .setName('removewarn')
-        .setDescription(`${EMOJIS.EMOJI_43} Remove uma advertência específica de um usuário (Staff apenas)`)
+        .setDescription(`${EMOJIS.EMOJI_43} Remove a ÚLTIMA advertência de um usuário (Staff apenas)`)
         .addUserOption(option =>
             option.setName('usuario')
-                .setDescription('Usuário que terá a advertência removida')
-                .setRequired(true))
-        .addStringOption(option =>
-            option.setName('id')
-                .setDescription('ID da advertência a ser removida')
+                .setDescription('Usuário que terá a última advertência removida')
                 .setRequired(true))
         .addStringOption(option =>
             option.setName('motivo')
@@ -745,12 +741,11 @@ const commands = [
 ];
 
 // ============================================
-// VERIFICAÇÃO DE PERMISSÃO STAFF - CORRIGIDA COM STAFF_ROLES
+// VERIFICAÇÃO DE PERMISSÃO STAFF
 // ============================================
 
 async function checkStaffPermission(interaction) {
     try {
-        // Aguardar o guild estar disponível
         await interaction.guild?.fetch();
         
         const member = interaction.member;
@@ -766,7 +761,6 @@ async function checkStaffPermission(interaction) {
             return false;
         }
 
-        // Verificar se STAFF_ROLES está configurado (CORRIGIDO)
         if (!STAFF_ROLES || STAFF_ROLES.length === 0) {
             console.log(chalk.bgRed.white(`${EMOJIS.EMOJI_40}[ERRO CONFIG]`) + chalk.red(' STAFF_ROLES não configurado corretamente'));
             
@@ -785,19 +779,15 @@ async function checkStaffPermission(interaction) {
             return false;
         }
 
-        // Buscar o nome do cargo staff para exibição (CORRIGIDO)
         let staffRoleName = 'Cargo Staff';
         
-        // Verificar se o membro tem QUALQUER UM dos cargos staff
         const memberRoles = member.roles.cache;
         const hasStaffRole = memberRoles.some(role => STAFF_ROLES.includes(role.id));
         
-        // Pegar o nome do primeiro cargo staff que o usuário possui (para exibir)
         const userStaffRole = memberRoles.find(role => STAFF_ROLES.includes(role.id));
         if (userStaffRole) {
             staffRoleName = userStaffRole.name;
         } else if (STAFF_ROLES.length > 0) {
-            // Fallback: tenta buscar o nome do primeiro cargo da lista
             try {
                 const firstRole = await interaction.guild.roles.fetch(STAFF_ROLES[0]);
                 if (firstRole) staffRoleName = firstRole.name;
@@ -806,15 +796,11 @@ async function checkStaffPermission(interaction) {
             }
         }
         
-        // DEBUG - Mostrar informações no console
         console.log(chalk.cyan(`${EMOJIS.GIT}[DEBUG PERMISSÃO]`));
         console.log(chalk.gray(`├─ Usuário: ${member.user.tag}`));
         console.log(chalk.gray(`├─ Cargo Staff Nome: ${staffRoleName}`));
-        console.log(chalk.gray(`├─ Cargos Staff IDs: ${STAFF_ROLES.join(', ')}`));
         console.log(chalk.gray(`├─ Tem cargo staff? ${hasStaffRole ? 'SIM ✓' : 'NÃO ✗'}`));
-        console.log(chalk.gray(`├─ Cargos do usuário: ${memberRoles.map(r => `${r.name} (${r.id})`).join(', ') || 'Nenhum'}`));
         
-        // Se não tiver o cargo staff - MOSTRA O NOME DO CARGO, NÃO O ID
         if (!hasStaffRole) {
             const denyEmbed = new EmbedBuilder()
                 .setColor('#E74C3C')
@@ -825,7 +811,6 @@ async function checkStaffPermission(interaction) {
                     { name: `${EMOJIS.STAFF} Seus Cargos`, value: memberRoles.map(r => `\`${r.name}\``).join(', ') || '`Nenhum cargo`', inline: false },
                     { name: '📌 Ação', value: 'Este comando é restrito à equipe de moderação', inline: false }
                 )
-                .setThumbnail('https://cdn.discordapp.com/emojis/890394788519342150.png')
                 .setFooter({ text: `${EMOJIS.BOT} Sistema de Moderação • ${member.user.tag}`, iconURL: member.user.displayAvatarURL() })
                 .setTimestamp();
 
@@ -929,7 +914,6 @@ async function handleWarnStats(interaction) {
 
         const warns = await warnManager.getUserWarns(targetUser.id);
         const warnCount = warns.length;
-        const warnLevelColor = getWarnLevelColor(warnCount);
         const warnIcon = getWarnLevelIcon(warnCount);
 
         let member = null;
@@ -1206,7 +1190,7 @@ async function handleAddWarn(interaction) {
 }
 
 // ============================================
-// HANDLER DO COMANDO /removewarn
+// HANDLER DO COMANDO /removewarn - SIMPLIFICADO
 // ============================================
 
 async function handleRemoveWarn(interaction) {
@@ -1218,8 +1202,7 @@ async function handleRemoveWarn(interaction) {
         if (!botHasPerms) return;
 
         const targetUser = interaction.options.getUser('usuario');
-        const warnId = interaction.options.getString('id');
-        const removalReason = interaction.options.getString('motivo') || 'Não especificado';
+        const removalReason = interaction.options.getString('motivo') || 'Removido por staff';
 
         if (!targetUser) {
             const errorEmbed = new EmbedBuilder()
@@ -1242,6 +1225,7 @@ async function handleRemoveWarn(interaction) {
         }
 
         const currentWarns = await warnManager.getUserWarns(targetUser.id);
+        
         if (currentWarns.length === 0) {
             const errorEmbed = new EmbedBuilder()
                 .setColor('#E74C3C')
@@ -1252,6 +1236,11 @@ async function handleRemoveWarn(interaction) {
             return;
         }
 
+        // Pega o warn mais recente (último da lista)
+        const lastWarn = currentWarns[currentWarns.length - 1];
+        const warnId = lastWarn.id;
+
+        // Remove o warn mais recente
         const result = await warnManager.removeWarn(targetUser.id, warnId, interaction.user.id, interaction.user.tag);
 
         if (!result.success) {
@@ -1259,10 +1248,6 @@ async function handleRemoveWarn(interaction) {
                 .setColor('#E74C3C')
                 .setTitle(`${EMOJIS.EMOJI_40} FALHA AO REMOVER WARN`)
                 .setDescription(`Não foi possível remover a advertência.\n\`\`\`${result.error}\`\`\``)
-                .addFields(
-                    { name: '🆔 ID Buscado', value: `\`${warnId}\``, inline: true },
-                    { name: '📌 Dica', value: 'Verifique se o ID está correto', inline: false }
-                )
                 .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
             return;
@@ -1271,12 +1256,14 @@ async function handleRemoveWarn(interaction) {
         const newWarnCount = result.totalWarns;
         const removedWarn = result.removedWarn;
 
+        // Atualiza os cargos do usuário
         let roleUpdateResult = { success: true, errors: [] };
         const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
         if (member) {
             roleUpdateResult = await punishmentManager.applyWarnRole(member, newWarnCount);
         }
 
+        // Define a cor e mensagem de status
         let embedColor;
         let statusMessage;
 
@@ -1297,7 +1284,7 @@ async function handleRemoveWarn(interaction) {
         const responseEmbed = new EmbedBuilder()
             .setColor(embedColor)
             .setTitle(`${EMOJIS.EMOJI_43} ADVERTÊNCIA REMOVIDA`)
-            .setDescription(`Uma advertência foi removida do histórico de **${targetUser.tag}**`)
+            .setDescription(`A última advertência foi removida do histórico de **${targetUser.tag}**`)
             .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 256 }))
             .addFields(
                 { name: '👤 Usuário', value: `${targetUser.tag}\n(${targetUser.id})`, inline: true },
@@ -1325,7 +1312,7 @@ async function handleRemoveWarn(interaction) {
             consequences: [`Warn ${removedWarn.id} removido do histórico`, `Total de warns agora: ${newWarnCount}/3`]
         });
 
-        console.log(chalk.bgYellow.black(`${EMOJIS.EMOJI_42}[REMOVEWARN] ${interaction.user.tag} removeu warn ${warnId} de ${targetUser.tag} - Restam: ${newWarnCount}`));
+        console.log(chalk.bgYellow.black(`${EMOJIS.EMOJI_42}[REMOVEWARN] ${interaction.user.tag} removeu o último warn de ${targetUser.tag} - Restam: ${newWarnCount}`));
 
     } catch (error) {
         console.log(chalk.bgRed.white(`${EMOJIS.EMOJI_40}[ERRO FATAL]`) + chalk.red(` handleRemoveWarn: ${error.message}`));
