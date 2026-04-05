@@ -498,13 +498,13 @@ class PunishmentManager {
             const botMember = await guild.members.fetch(this.client.user.id);
             
             botPermissions.hasManageRoles = botMember.permissions.has(PermissionsBitField.Flags.ManageRoles);
-            botPermissions.hasKickMembers = botMember.permissions.has(PermissionsBitField.Flags.KickMembers);
+            botPermissions.hasBanMembers = botMember.permissions.has(PermissionsBitField.Flags.BanMembers);
             botPermissions.hasSendMessages = botMember.permissions.has(PermissionsBitField.Flags.SendMessages);
             botPermissions.hasViewChannel = botMember.permissions.has(PermissionsBitField.Flags.ViewChannel);
             
             const missingPerms = [];
             if (!botPermissions.hasManageRoles) missingPerms.push('ManageRoles');
-            if (!botPermissions.hasKickMembers) missingPerms.push('KickMembers');
+            if (!botPermissions.hasBanMembers) missingPerms.push('BanMembers');
             
             if (missingPerms.length > 0) {
                 console.log(chalk.yellow(`⚠ Bot sem permissões: ${missingPerms.join(', ')}`));
@@ -607,7 +607,7 @@ class PunishmentManager {
                         { name: '📊 Nível Atual', value: '**2/3** - Segundo aviso', inline: true },
                         { name: `${EMOJIS.TICKET_TOOL} ID do Warn`, value: `\`${warnId}\``, inline: true },
                         { name: '📝 Motivo', value: warnReason, inline: false },
-                        { name: '⚠️ Consequência', value: 'Uma próxima advertência resultará em **expulsão** do servidor', inline: false },
+                        { name: '⚠️ Consequência', value: 'Uma próxima advertência resultará em **banimento** do servidor', inline: false },
                         { name: '📅 Data', value: formatDateBrazilian(new Date()), inline: true }
                     )
                     .setFooter({ text: `${EMOJIS.BOT} Sistema de Moderação Automática` })
@@ -615,14 +615,14 @@ class PunishmentManager {
             } else {
                 dmEmbed = new EmbedBuilder()
                     .setColor('#E74C3C')
-                    .setTitle(`${EMOJIS.EMOJI_40} LIMITE MÁXIMO ATINGIDO - EXPULSÃO`)
+                    .setTitle(`${EMOJIS.EMOJI_40} LIMITE MÁXIMO ATINGIDO - BANIMENTO`)
                     .setDescription(`Você atingiu o limite máximo de 3 advertências no servidor **${member.guild.name}**`)
                     .setThumbnail(member.guild.iconURL({ dynamic: true }))
                     .addFields(
                         { name: '📊 Nível Final', value: '**3/3** - Limite excedido', inline: true },
                         { name: `${EMOJIS.TICKET_TOOL} Último Warn`, value: `\`${warnId}\``, inline: true },
                         { name: '📝 Último Motivo', value: warnReason, inline: false },
-                        { name: '🚫 Ação Tomada', value: 'Você foi **expulso(a)** do servidor', inline: false },
+                        { name: '🚫 Ação Tomada', value: 'Você foi **banido(a)** do servidor', inline: false },
                         { name: '📅 Data', value: formatDateBrazilian(new Date()), inline: true }
                     )
                     .setFooter({ text: `${EMOJIS.BOT} Sistema de Moderação Automática` })
@@ -642,23 +642,23 @@ class PunishmentManager {
         }
     }
 
-    async kickMember(member, reason, warnCount) {
+    async banMember(member, reason, warnCount) {
         try {
-            if (!member.kickable) {
-                return { success: false, error: 'Bot não pode kickar' };
+            if (!member.bannable) {
+                return { success: false, error: 'Bot não pode banir este usuário (cargo mais alto ou sem permissão)' };
             }
             
-            if (!botPermissions.hasKickMembers) {
-                return { success: false, error: 'Bot sem permissão KickMembers' };
+            if (!botPermissions.hasBanMembers) {
+                return { success: false, error: 'Bot sem permissão BanMembers' };
             }
             
-            const kickReason = `Acumulou ${warnCount}/3 warns - Motivo: ${reason}`;
-            await member.kick(kickReason);
+            const banReason = `Acumulou ${warnCount}/3 warns - Motivo: ${reason}`;
+            await member.ban({ reason: banReason });
             
-            console.log(chalk.red(`✗ Usuário expulso: ${member.user.tag}`));
+            console.log(chalk.red(`✗ Usuário banido: ${member.user.tag}`));
             return { success: true };
         } catch (error) {
-            console.log(chalk.red(`✗ Erro ao expulsar: ${error.message}`));
+            console.log(chalk.red(`✗ Erro ao banir: ${error.message}`));
             return { success: false, error: error.message };
         }
     }
@@ -668,7 +668,7 @@ class PunishmentManager {
             const results = {
                 rolesUpdated: false,
                 dmSent: false,
-                kicked: false,
+                banned: false,
                 errors: []
             };
             
@@ -687,11 +687,11 @@ class PunishmentManager {
             }
             
             if (warnCount >= 3) {
-                const kickResult = await this.kickMember(member, lastWarnReason, warnCount);
-                if (kickResult.success) {
-                    results.kicked = true;
+                const banResult = await this.banMember(member, lastWarnReason, warnCount);
+                if (banResult.success) {
+                    results.banned = true;
                 } else {
-                    results.errors.push(`Erro ao expulsar: ${kickResult.error}`);
+                    results.errors.push(`Erro ao banir: ${banResult.error}`);
                 }
             }
             
@@ -752,10 +752,10 @@ class LogManager {
                     embedTitle = `${EMOJIS.EMOJI_43} REMOÇÃO DE ADVERTÊNCIA`;
                     embedDescription = `Uma advertência foi removida do histórico`;
                     break;
-                case 'KICK':
+                case 'BAN':
                     embedColor = '#E74C3C';
-                    embedTitle = `${EMOJIS.EMOJI_40} EXPULSÃO AUTOMÁTICA`;
-                    embedDescription = `Um usuário foi expulso`;
+                    embedTitle = `${EMOJIS.EMOJI_40} BANIMENTO AUTOMÁTICO`;
+                    embedDescription = `Um usuário foi banido`;
                     break;
                 default:
                     embedColor = '#3498DB';
@@ -785,7 +785,7 @@ class LogManager {
                     { name: `${EMOJIS.TICKET_TOOL} Warn Removido`, value: `\`${details.warnId}\``, inline: true },
                     { name: '⚠️ Warns Restantes', value: `${details.warnCount}/3`, inline: true }
                 );
-            } else if (action === 'KICK') {
+            } else if (action === 'BAN') {
                 embed.addFields(
                     { name: '🚫 Motivo', value: details.reason || 'Limite de warns excedido', inline: false },
                     { name: '⚠️ Total de Warns', value: `${details.warnCount}/3`, inline: true }
@@ -991,9 +991,9 @@ async function checkBotPermissionsForAction(interaction, action) {
             }
         }
 
-        if (action === 'kick') {
-            if (!botMember.permissions.has(PermissionsBitField.Flags.KickMembers)) {
-                missingPerms.push('KickMembers');
+        if (action === 'ban') {
+            if (!botMember.permissions.has(PermissionsBitField.Flags.BanMembers)) {
+                missingPerms.push('BanMembers');
             }
         }
 
@@ -1187,12 +1187,12 @@ async function handleAddWarn(interaction) {
             embedColor = '#E67E22';
             embedTitle = `${EMOJIS.EMOJI_42} SEGUNDA ADVERTÊNCIA - NÍVEL 2`;
             embedDescription = `Segunda advertência para **${targetUser.tag}**`;
-            actionMessage = '• DM de aviso enviada\n• Próxima advertência = expulsão';
+            actionMessage = '• DM de aviso enviada\n• Próxima advertência = BANIMENTO';
         } else {
             embedColor = '#E74C3C';
-            embedTitle = `${EMOJIS.EMOJI_40} LIMITE MÁXIMO ATINGIDO - EXPULSÃO`;
+            embedTitle = `${EMOJIS.EMOJI_40} LIMITE MÁXIMO ATINGIDO - BANIMENTO`;
             embedDescription = `**${targetUser.tag}** atingiu o limite de 3 advertências`;
-            actionMessage = '• Usuário EXPULSO do servidor';
+            actionMessage = '• Usuário BANIDO do servidor';
         }
 
         const responseEmbed = new EmbedBuilder()
@@ -1213,11 +1213,18 @@ async function handleAddWarn(interaction) {
 
         await interaction.reply({ embeds: [responseEmbed], flags: MessageFlags.Ephemeral });
 
-        await logManager.sendModerationLog(targetUser, interaction.user, 'ADDWARN', {
-            warnId: warnId,
-            warnCount: warnCount,
-            reason: fullReason
-        });
+        if (warnCount >= 3) {
+            await logManager.sendModerationLog(targetUser, interaction.user, 'BAN', {
+                warnCount: warnCount,
+                reason: fullReason
+            });
+        } else {
+            await logManager.sendModerationLog(targetUser, interaction.user, 'ADDWARN', {
+                warnId: warnId,
+                warnCount: warnCount,
+                reason: fullReason
+            });
+        }
 
         // Invalidate member cache after adding warn
         memberCacheManager.invalidateMember(interaction.guild.id, targetUser.id);
@@ -1416,8 +1423,18 @@ client.once('ready', async () => {
     loadWarnsDatabase();
     await registerGlobalCommands();
     
+    // Verificar permissões do bot em todos os servidores
     for (const guild of client.guilds.cache.values()) {
-        await punishmentManager.checkBotPermissions(guild);
+        const perms = await punishmentManager.checkBotPermissions(guild);
+        console.log(chalk.gray(`  ${guild.name}: BanMembers=${botPermissions.hasBanMembers}, ManageRoles=${botPermissions.hasManageRoles}`));
+        
+        if (!botPermissions.hasBanMembers) {
+            console.log(chalk.yellow(`  ⚠ AVISO: Bot sem permissão de BANIR em ${guild.name}`));
+            await logManager.sendSystemLog(`Bot sem permissão de BANIR em ${guild.name}`, 'WARNING');
+        }
+        if (!botPermissions.hasManageRoles) {
+            console.log(chalk.yellow(`  ⚠ AVISO: Bot sem permissão de gerenciar cargos em ${guild.name}`));
+        }
     }
     
     client.user.setPresence({
