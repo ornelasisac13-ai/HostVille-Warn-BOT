@@ -33,7 +33,6 @@ const TOKEN = process.env.TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const GUILD_ID = process.env.GUILD_ID;
 
-// STAFF ROLES - Array com IDs dos cargos de staff
 const STAFF_ROLES = [
   "1392306046655008891",
   "1392306043215679599",
@@ -47,7 +46,6 @@ const WARN_2 = process.env.WARN_2;
 const WARN_3 = process.env.WARN_3;
 const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID;
 
-// Validação inicial das variáveis
 if (!TOKEN || !CLIENT_ID) {
     console.log(chalk.bgRed.white('[ERRO FATAL]') + chalk.red(' TOKEN e CLIENT_ID são obrigatórios!'));
     process.exit(1);
@@ -57,21 +55,13 @@ if (!GUILD_ID) {
     console.log(chalk.bgYellow.black('[AVISO]') + chalk.yellow(' GUILD_ID não configurado.'));
 }
 
-// Arquivo de armazenamento de warns
 const WARNS_FILE = path.join(__dirname, 'warns.json');
-
-// Estrutura de dados para warns
 let warnsDatabase = new Map();
 let cachedStaffRoleName = null;
 let cachedGuild = null;
 
-// Cache de Membros
 const memberCache = new Map();
-const MEMBER_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
-
-// ============================================
-// FUNÇÕES DE ARQUIVO E PERSISTÊNCIA
-// ============================================
+const MEMBER_CACHE_TTL = 5 * 60 * 1000;
 
 function loadWarnsDatabase() {
     try {
@@ -106,10 +96,6 @@ function saveWarnsDatabase() {
 
 let botPermissions = {};
 
-// ============================================
-// GERENCIADOR DE ERROS
-// ============================================
-
 class ErrorHandler {
     constructor(client, logManager) {
         this.client = client;
@@ -142,11 +128,12 @@ class ErrorHandler {
     }
 
     async handleInteractionError(interaction, error, commandName) {
-        const errorEmbed = EmbedHelper.createErrorEmbed(
-            'ERRO NA EXECUÇÃO',
-            `Ocorreu um erro ao executar o comando **${commandName}**`,
-            error.message
-        );
+        const errorEmbed = new EmbedBuilder()
+            .setColor('#E74C3C')
+            .setTitle(`${EMOJIS.EMOJI_40} ERRO NA EXECUÇÃO`)
+            .setDescription(`Ocorreu um erro ao executar o comando **${commandName}**`)
+            .addFields({ name: '📋 Detalhes', value: `\`${error.message}\``, inline: false })
+            .setTimestamp();
 
         const flags = MessageFlags.Ephemeral;
         
@@ -159,10 +146,6 @@ class ErrorHandler {
         await this.handleError(error, { command: commandName, user: interaction.user });
     }
 }
-
-// ============================================
-// EMBED HELPER
-// ============================================
 
 class EmbedHelper {
     static createSuccessEmbed(title, description, fields = []) {
@@ -222,10 +205,6 @@ class EmbedHelper {
     }
 }
 
-// ============================================
-// FUNÇÕES AUXILIARES E UTILITÁRIOS
-// ============================================
-
 function generateUniqueWarnId() {
     const timestamp = Date.now().toString(36);
     const random = Math.random().toString(36).substring(2, 8);
@@ -260,10 +239,6 @@ function getWarnLevelIcon(warnCount) {
     return EMOJIS.EMOJI_40;
 }
 
-// ============================================
-// GERENCIADOR DE CACHE DE MEMBROS
-// ============================================
-
 class MemberCacheManager {
     constructor(client) {
         this.client = client;
@@ -293,18 +268,6 @@ class MemberCacheManager {
         }
     }
 
-    async getMemberSafe(guild, userId) {
-        try {
-            if (guild.members.cache.has(userId)) {
-                return guild.members.cache.get(userId);
-            }
-            
-            return await this.getMember(guild.id, userId);
-        } catch (error) {
-            return null;
-        }
-    }
-
     invalidateMember(guildId, userId) {
         const cacheKey = `${guildId}:${userId}`;
         this.cache.delete(cacheKey);
@@ -314,10 +277,6 @@ class MemberCacheManager {
         this.cache.clear();
     }
 }
-
-// ============================================
-// FUNÇÃO PARA BUSCAR NOME DO CARGO STAFF
-// ============================================
 
 async function getStaffRoleName(client) {
     if (cachedStaffRoleName) return cachedStaffRoleName;
@@ -343,10 +302,6 @@ async function getStaffRoleName(client) {
         return 'Cargo Staff';
     }
 }
-
-// ============================================
-// GERENCIADOR DE WARNS
-// ============================================
 
 class WarnManager {
     
@@ -450,32 +405,7 @@ class WarnManager {
             return 0;
         }
     }
-
-    async getAllWarnsFormatted(userId) {
-        try {
-            const warns = await this.getUserWarns(userId);
-            if (warns.length === 0) return null;
-            
-            let formattedList = '';
-            for (let i = 0; i < warns.length; i++) {
-                const warn = warns[i];
-                const icon = i === 0 ? EMOJIS.EMOJI_41 : (i === 1 ? EMOJIS.EMOJI_42 : EMOJIS.EMOJI_40);
-                formattedList += `${icon} **#${warn.warnNumber}** \`${warn.id}\`\n`;
-                formattedList += `   📝 Motivo: ${warn.reason}\n`;
-                formattedList += `   📅 Data: ${warn.formattedDate}\n`;
-                formattedList += `   ${EMOJIS.STAFF} Staff: ${warn.staffName}\n`;
-                if (i < warns.length - 1) formattedList += '\n';
-            }
-            return formattedList;
-        } catch (error) {
-            return null;
-        }
-    }
 }
-
-// ============================================
-// GERENCIADOR DE CARGOS E PUNIÇÕES
-// ============================================
 
 class PunishmentManager {
     
@@ -598,7 +528,7 @@ class PunishmentManager {
                         { name: '⚠️ Consequência', value: 'Uma próxima advertência resultará em **banimento** do servidor', inline: false },
                         { name: '📅 Data', value: formatDateBrazilian(new Date()), inline: true }
                     )
-                    .setFooter({ text: `${EMOJIS.BOT} Sistema de Moderação Automática` })
+                    .setFooter({ text: `${EMOJIS.BOT} Sistema de Moderação` })
                     .setTimestamp();
             } else if (warnCount >= 3) {
                 dmEmbed = new EmbedBuilder()
@@ -613,7 +543,7 @@ class PunishmentManager {
                         { name: '🚫 Ação Tomada', value: 'Você foi **banido(a)** do servidor', inline: false },
                         { name: '📅 Data', value: formatDateBrazilian(new Date()), inline: true }
                     )
-                    .setFooter({ text: `${EMOJIS.BOT} Sistema de Moderação Automática` })
+                    .setFooter({ text: `${EMOJIS.BOT} Sistema de Moderação` })
                     .setTimestamp();
             }
             
@@ -657,7 +587,6 @@ class PunishmentManager {
                 results.errors.push(`Erro nos cargos: ${roleResult.error}`);
             }
             
-            // Envia DM para warn 2 e warn 3
             if (warnCount === 2 || warnCount >= 3) {
                 const dmResult = await this.sendWarningDM(member, warnCount, lastWarnReason, lastWarnId);
                 if (dmResult.success) {
@@ -680,10 +609,6 @@ class PunishmentManager {
         }
     }
 }
-
-// ============================================
-// GERENCIADOR DE LOGS
-// ============================================
 
 class LogManager {
     
@@ -804,51 +729,13 @@ class LogManager {
         } catch (error) {}
     }
 
-    async sendSystemLog(message, type = 'INFO') {
-        try {
-            const logChannel = await this.getLogChannel();
-            if (!logChannel) return;
-
-            const colors = {
-                INFO: '#3498DB',
-                WARNING: '#F1C40F',
-                ERROR: '#E74C3C',
-                SUCCESS: '#2ECC71'
-            };
-
-            const icons = {
-                INFO: 'ℹ️',
-                WARNING: '⚠️',
-                ERROR: '❌',
-                SUCCESS: '✅'
-            };
-
-            const embed = new EmbedBuilder()
-                .setColor(colors[type] || '#3498DB')
-                .setTitle(`${icons[type] || 'ℹ️'} LOG DO SISTEMA`)
-                .setDescription(message)
-                .setFooter({ text: `${EMOJIS.BOT} Sistema` })
-                .setTimestamp();
-
-            await logChannel.send({ embeds: [embed] });
-        } catch (error) {}
-    }
-
     getStatusEmoji(warnCount) {
         if (warnCount === 0) return `${EMOJIS.EMOJI_43} Limpo`;
         if (warnCount === 1) return `${EMOJIS.EMOJI_41} Nível 1`;
         if (warnCount === 2) return `${EMOJIS.EMOJI_42} Nível 2`;
         return `${EMOJIS.EMOJI_40} Nível 3`;
     }
-
-    createErrorEmbed(title, description, errorDetails = null) {
-        return EmbedHelper.createErrorEmbed(title, description, errorDetails);
-    }
 }
-
-// ============================================
-// SISTEMA DE COMANDOS SLASH
-// ============================================
 
 const commands = [
     new SlashCommandBuilder()
@@ -892,10 +779,6 @@ const commands = [
                 .setRequired(false))
 ];
 
-// ============================================
-// VERIFICAÇÃO DE PERMISSÃO STAFF
-// ============================================
-
 async function checkStaffPermission(interaction) {
     try {
         await interaction.guild?.fetch();
@@ -903,19 +786,21 @@ async function checkStaffPermission(interaction) {
         const member = interaction.member;
         
         if (!member) {
-            const errorEmbed = EmbedHelper.createErrorEmbed(
-                'ERRO',
-                'Não foi possível verificar suas permissões.'
-            );
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} ERRO`)
+                .setDescription('Não foi possível verificar suas permissões.')
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return false;
         }
 
         if (!STAFF_ROLES || STAFF_ROLES.length === 0) {
-            const errorEmbed = EmbedHelper.createErrorEmbed(
-                'ERRO DE CONFIGURAÇÃO',
-                'Os cargos de staff não foram configurados.'
-            );
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} ERRO DE CONFIGURAÇÃO`)
+                .setDescription('Os cargos de staff não foram configurados.')
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return false;
         }
@@ -924,10 +809,12 @@ async function checkStaffPermission(interaction) {
         const hasStaffRole = memberRoles.some(role => STAFF_ROLES.includes(role.id));
         
         if (!hasStaffRole) {
-            const denyEmbed = EmbedHelper.createErrorEmbed(
-                'ACESSO NEGADO',
-                'Você não tem permissão para executar este comando.'
-            ).addFields({ name: '🔑 Permissão Necessária', value: 'Cargo de Staff', inline: true });
+            const denyEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} ACESSO NEGADO`)
+                .setDescription('Você não tem permissão para executar este comando.')
+                .addFields({ name: '🔑 Permissão Necessária', value: 'Cargo de Staff', inline: true })
+                .setTimestamp();
             
             await interaction.reply({ embeds: [denyEmbed], flags: MessageFlags.Ephemeral });
             return false;
@@ -936,18 +823,15 @@ async function checkStaffPermission(interaction) {
         return true;
 
     } catch (error) {
-        const errorEmbed = EmbedHelper.createErrorEmbed(
-            'ERRO',
-            `Erro ao verificar permissão: ${error.message}`
-        );
+        const errorEmbed = new EmbedBuilder()
+            .setColor('#E74C3C')
+            .setTitle(`${EMOJIS.EMOJI_40} ERRO`)
+            .setDescription(`Erro ao verificar permissão: ${error.message}`)
+            .setTimestamp();
         await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
         return false;
     }
 }
-
-// ============================================
-// VERIFICAÇÃO DE PERMISSÃO DO BOT
-// ============================================
 
 async function checkBotPermissionsForAction(interaction, action) {
     try {
@@ -967,10 +851,12 @@ async function checkBotPermissionsForAction(interaction, action) {
         }
 
         if (missingPerms.length > 0) {
-            const permEmbed = EmbedHelper.createErrorEmbed(
-                'PERMISSÕES INSUFICIENTES',
-                'O bot não possui as permissões necessárias.'
-            ).addFields({ name: '🔧 Permissões Faltando', value: missingPerms.map(p => `\`${p}\``).join(', '), inline: false });
+            const permEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} PERMISSÕES INSUFICIENTES`)
+                .setDescription('O bot não possui as permissões necessárias.')
+                .addFields({ name: '🔧 Permissões Faltando', value: missingPerms.map(p => `\`${p}\``).join(', '), inline: false })
+                .setTimestamp();
             
             await interaction.reply({ embeds: [permEmbed], flags: MessageFlags.Ephemeral });
             return false;
@@ -982,23 +868,26 @@ async function checkBotPermissionsForAction(interaction, action) {
     }
 }
 
-// ============================================
-// HANDLER DO COMANDO /warnstats
-// ============================================
-
 async function handleWarnStats(interaction) {
     try {
         const targetUser = interaction.options.getUser('usuario');
-        const detailed = interaction.options.getBoolean('detalhado') || false;
 
         if (!targetUser) {
-            const errorEmbed = EmbedHelper.createErrorEmbed('ERRO', 'Usuário não encontrado.');
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} ERRO`)
+                .setDescription('Usuário não encontrado.')
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return;
         }
 
         if (targetUser.bot) {
-            const errorEmbed = EmbedHelper.createErrorEmbed('OPERAÇÃO INVÁLIDA', 'Bots não podem receber advertências.');
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} OPERAÇÃO INVÁLIDA`)
+                .setDescription('Bots não podem receber advertências.')
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return;
         }
@@ -1006,11 +895,6 @@ async function handleWarnStats(interaction) {
         const warns = await warnManager.getUserWarns(targetUser.id);
         const warnCount = warns.length;
         const warnIcon = getWarnLevelIcon(warnCount);
-
-        let member = null;
-        try {
-            member = await memberCacheManager.getMember(interaction.guild.id, targetUser.id);
-        } catch (error) {}
 
         if (warnCount === 0) {
             const cleanEmbed = new EmbedBuilder()
@@ -1077,10 +961,6 @@ async function handleWarnStats(interaction) {
     }
 }
 
-// ============================================
-// HANDLER DO COMANDO /addwarn
-// ============================================
-
 async function handleAddWarn(interaction) {
     try {
         const hasStaffPermission = await checkStaffPermission(interaction);
@@ -1094,26 +974,42 @@ async function handleAddWarn(interaction) {
         const details = interaction.options.getString('detalhes') || '';
 
         if (!targetUser) {
-            const errorEmbed = EmbedHelper.createErrorEmbed('ERRO', 'Usuário não encontrado.');
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} ERRO`)
+                .setDescription('Usuário não encontrado.')
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return;
         }
 
         if (targetUser.bot) {
-            const errorEmbed = EmbedHelper.createErrorEmbed('OPERAÇÃO INVÁLIDA', 'Não é possível adicionar advertências a bots.');
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} OPERAÇÃO INVÁLIDA`)
+                .setDescription('Não é possível adicionar advertências a bots.')
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return;
         }
 
         const member = await memberCacheManager.getMember(interaction.guild.id, targetUser.id);
         if (!member) {
-            const errorEmbed = EmbedHelper.createErrorEmbed('USUÁRIO NÃO ENCONTRADO', 'O usuário não está mais no servidor.');
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} USUÁRIO NÃO ENCONTRADO`)
+                .setDescription('O usuário não está mais no servidor.')
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return;
         }
 
         if (targetUser.id === interaction.user.id) {
-            const errorEmbed = EmbedHelper.createErrorEmbed('AUTO-ADVERTÊNCIA', 'Você não pode adicionar uma advertência a si mesmo.');
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} AUTO-ADVERTÊNCIA`)
+                .setDescription('Você não pode adicionar uma advertência a si mesmo.')
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return;
         }
@@ -1123,7 +1019,11 @@ async function handleAddWarn(interaction) {
         const result = await warnManager.addWarn(targetUser.id, fullReason, interaction.user.id, interaction.user.tag);
 
         if (!result.success) {
-            const errorEmbed = EmbedHelper.createErrorEmbed('FALHA AO ADICIONAR WARN', `Erro: ${result.error}`);
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} FALHA AO ADICIONAR WARN`)
+                .setDescription(`Erro: ${result.error}`)
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return;
         }
@@ -1193,10 +1093,6 @@ async function handleAddWarn(interaction) {
     }
 }
 
-// ============================================
-// HANDLER DO COMANDO /removewarn
-// ============================================
-
 async function handleRemoveWarn(interaction) {
     try {
         const hasStaffPermission = await checkStaffPermission(interaction);
@@ -1209,13 +1105,21 @@ async function handleRemoveWarn(interaction) {
         const removalReason = interaction.options.getString('motivo') || 'Removido por staff';
 
         if (!targetUser) {
-            const errorEmbed = EmbedHelper.createErrorEmbed('ERRO', 'Usuário não encontrado.');
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} ERRO`)
+                .setDescription('Usuário não encontrado.')
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return;
         }
 
         if (targetUser.bot) {
-            const errorEmbed = EmbedHelper.createErrorEmbed('OPERAÇÃO INVÁLIDA', 'Bots não possuem advertências.');
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} OPERAÇÃO INVÁLIDA`)
+                .setDescription('Bots não possuem advertências.')
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return;
         }
@@ -1223,7 +1127,11 @@ async function handleRemoveWarn(interaction) {
         const currentWarns = await warnManager.getUserWarns(targetUser.id);
         
         if (currentWarns.length === 0) {
-            const errorEmbed = EmbedHelper.createErrorEmbed('NENHUM WARN ENCONTRADO', `**${targetUser.tag}** não possui advertências.`);
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} NENHUM WARN ENCONTRADO`)
+                .setDescription(`**${targetUser.tag}** não possui advertências.`)
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return;
         }
@@ -1234,7 +1142,11 @@ async function handleRemoveWarn(interaction) {
         const result = await warnManager.removeWarn(targetUser.id, warnId, interaction.user.id, interaction.user.tag);
 
         if (!result.success) {
-            const errorEmbed = EmbedHelper.createErrorEmbed('FALHA AO REMOVER WARN', `Erro: ${result.error}`);
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#E74C3C')
+                .setTitle(`${EMOJIS.EMOJI_40} FALHA AO REMOVER WARN`)
+                .setDescription(`Erro: ${result.error}`)
+                .setTimestamp();
             await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
             return;
         }
@@ -1296,10 +1208,6 @@ async function handleRemoveWarn(interaction) {
     }
 }
 
-// ============================================
-// HANDLER PRINCIPAL DE INTERAÇÕES
-// ============================================
-
 async function handleInteraction(interaction) {
     if (!interaction.isChatInputCommand()) return;
 
@@ -1318,10 +1226,6 @@ async function handleInteraction(interaction) {
     }
 }
 
-// ============================================
-// REGISTRO DE COMANDOS GLOBAIS
-// ============================================
-
 async function registerGlobalCommands() {
     try {
         const rest = new REST({ version: '10' }).setToken(TOKEN);
@@ -1339,10 +1243,6 @@ async function registerGlobalCommands() {
     }
 }
 
-// ============================================
-// EVENTOS DO CLIENTE
-// ============================================
-
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -1359,7 +1259,6 @@ const logManager = new LogManager(client);
 const memberCacheManager = new MemberCacheManager(client);
 const errorHandler = new ErrorHandler(client, logManager);
 
-// Limpeza periódica do cache de membros
 setInterval(() => {
     memberCacheManager.clearCache();
 }, 30 * 60 * 1000);
@@ -1402,17 +1301,9 @@ client.on('guildMemberAdd', async (member) => {
     } catch (error) {}
 });
 
-// ============================================
-// BACKUP AUTOMÁTICO - 8 HORAS
-// ============================================
-
 setInterval(() => {
     saveWarnsDatabase();
 }, 28800000);
-
-// ============================================
-// TRATAMENTO DE SINAIS DO SISTEMA
-// ============================================
 
 process.on('SIGINT', async () => {
     console.log(chalk.yellow('\n⚠ Salvando dados...'));
@@ -1437,10 +1328,6 @@ process.on('unhandledRejection', async (reason) => {
     console.log(chalk.red(`✗ Promise rejeitada: ${reason}`));
     saveWarnsDatabase();
 });
-
-// ============================================
-// INICIALIZAÇÃO DO BOT
-// ============================================
 
 console.log(chalk.blue('\n✓ Iniciando bot...\n'));
 
