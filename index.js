@@ -1258,7 +1258,7 @@ setInterval(() => {
     memberCacheManager.clearCache();
 }, 30 * 60 * 1000);
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
     console.log(chalk.green(`\n✓ Bot online: ${client.user.tag}`));
     console.log(chalk.gray(`✓ Servidores: ${client.guilds.cache.size}`));
     
