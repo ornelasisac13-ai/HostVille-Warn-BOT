@@ -1200,10 +1200,10 @@ client.once('ready', async () => {
     
     client.user.setPresence({
         activities: [{
-            name: `/addwarn | /removewarn`,
-            type: 3
+            name: `𝙼𝚊𝚍𝚎 𝙱𝚢 𝚈𝟸𝚔_𝙽𝚊𝚝`,
+            type: 1
         }],
-        status: 'online'
+        status: 'idle'
     });
     
     console.log(chalk.green('✓ Bot pronto!\n'));
