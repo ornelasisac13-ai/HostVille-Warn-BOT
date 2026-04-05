@@ -1,7 +1,6 @@
 // ============================================
 // DISCORD WARN BOT - SISTEMA COMPLETO DE MODERAÇÃO
 // discord.js v14.14.1
-// COM LOGS MELHORADOS E MODULARIZAÇÃO
 // ============================================
 
 require('dotenv').config();
@@ -126,7 +125,6 @@ class ErrorHandler {
             timestamp: new Date().toISOString()
         };
 
-        // Log no console com cores
         console.log(chalk.bgRed.white('[ERRO]') + chalk.red(` ${error.message}`));
         if (context.command) {
             console.log(chalk.red(`  Comando: ${context.command}`));
@@ -136,7 +134,6 @@ class ErrorHandler {
         }
         console.log(chalk.gray(`  Stack: ${error.stack?.split('\n')[1] || 'N/A'}`));
 
-        // Enviar para o canal de logs se disponível
         if (this.logManager && LOG_CHANNEL_ID && LOG_CHANNEL_ID !== 'id_do_canal_de_logs') {
             await this.logManager.sendErrorLog(errorInfo);
         }
@@ -145,7 +142,7 @@ class ErrorHandler {
     }
 
     async handleInteractionError(interaction, error, commandName) {
-        const errorEmbed = this.logManager?.createErrorEmbed(
+        const errorEmbed = EmbedHelper.createErrorEmbed(
             'ERRO NA EXECUÇÃO',
             `Ocorreu um erro ao executar o comando **${commandName}**`,
             error.message
@@ -278,7 +275,6 @@ class MemberCacheManager {
         const cached = this.cache.get(cacheKey);
         
         if (cached && (Date.now() - cached.timestamp) < MEMBER_CACHE_TTL) {
-            console.log(chalk.gray(`[Cache] Hit: ${userId}`));
             return cached.member;
         }
         
@@ -291,10 +287,8 @@ class MemberCacheManager {
                 timestamp: Date.now()
             });
             
-            console.log(chalk.gray(`[Cache] Miss - Fetched: ${userId}`));
             return member;
         } catch (error) {
-            console.log(chalk.yellow(`[Cache] Erro ao buscar membro ${userId}: ${error.message}`));
             return null;
         }
     }
@@ -314,12 +308,10 @@ class MemberCacheManager {
     invalidateMember(guildId, userId) {
         const cacheKey = `${guildId}:${userId}`;
         this.cache.delete(cacheKey);
-        console.log(chalk.gray(`[Cache] Invalidated: ${userId}`));
     }
 
     clearCache() {
         this.cache.clear();
-        console.log(chalk.gray('[Cache] Cleared all entries'));
     }
 }
 
@@ -370,7 +362,6 @@ class WarnManager {
             }
             return warnsDatabase.get(userId);
         } catch (error) {
-            console.log(chalk.red(`✗ Erro ao buscar warns: ${error.message}`));
             return [];
         }
     }
@@ -513,7 +504,6 @@ class PunishmentManager {
             
             return true;
         } catch (error) {
-            console.log(chalk.red(`✗ Erro ao verificar permissões: ${error.message}`));
             return false;
         }
     }
@@ -543,7 +533,6 @@ class PunishmentManager {
             
             return { success: true };
         } catch (error) {
-            console.log(chalk.red(`✗ Erro ao remover cargos: ${error.message}`));
             return { success: false, error: error.message };
         }
     }
@@ -588,7 +577,6 @@ class PunishmentManager {
             
             return { success: true, action: 'no_role_needed' };
         } catch (error) {
-            console.log(chalk.red(`✗ Erro ao aplicar cargo: ${error.message}`));
             return { success: false, error: error.message };
         }
     }
@@ -612,7 +600,7 @@ class PunishmentManager {
                     )
                     .setFooter({ text: `${EMOJIS.BOT} Sistema de Moderação Automática` })
                     .setTimestamp();
-            } else {
+            } else if (warnCount >= 3) {
                 dmEmbed = new EmbedBuilder()
                     .setColor('#E74C3C')
                     .setTitle(`${EMOJIS.EMOJI_40} LIMITE MÁXIMO ATINGIDO - BANIMENTO`)
@@ -637,45 +625,18 @@ class PunishmentManager {
                 console.log(chalk.yellow(`⚠ DM bloqueada: ${member.user.tag}`));
                 return { success: false, error: 'DM bloqueada' };
             }
-            console.log(chalk.red(`✗ Erro ao enviar DM: ${error.message}`));
             return { success: false, error: error.message };
         }
     }
 
     async banMember(member, reason, warnCount) {
         try {
-            console.log(chalk.bgRed.white('[BAN DEBUG]') + chalk.yellow(` Iniciando ban para ${member.user.tag}`));
-            
-            // Verificar permissões em tempo real
-            const botMember = await member.guild.members.fetch(this.client.user.id);
-            const hasBanPerm = botMember.permissions.has(PermissionsBitField.Flags.BanMembers);
-            
-            console.log(chalk.yellow(`[BAN DEBUG] Permissão de banir: ${hasBanPerm}`));
-            console.log(chalk.yellow(`[BAN DEBUG] Member bannable: ${member.bannable}`));
-            console.log(chalk.yellow(`[BAN DEBUG] Bot role highest: ${botMember.roles.highest.name}`));
-            console.log(chalk.yellow(`[BAN DEBUG] Member role highest: ${member.roles.highest.name}`));
-            
-            if (!member.bannable) {
-                const errorMsg = `Bot não pode banir - cargo do bot (${botMember.roles.highest.name}) é mais baixo que o cargo do membro (${member.roles.highest.name})`;
-                console.log(chalk.red(`[BAN DEBUG] ${errorMsg}`));
-                return { success: false, error: errorMsg };
-            }
-            
-            if (!hasBanPerm) {
-                console.log(chalk.red(`[BAN DEBUG] Bot não tem permissão BanMembers`));
-                return { success: false, error: 'Bot sem permissão BanMembers' };
-            }
-            
             const banReason = `Acumulou ${warnCount}/3 warns - Motivo: ${reason}`;
-            console.log(chalk.yellow(`[BAN DEBUG] Executando ban com motivo: ${banReason}`));
-            
             await member.ban({ reason: banReason });
-            
-            console.log(chalk.bgGreen.white('[BAN DEBUG]') + chalk.green(` BANIDO COM SUCESSO: ${member.user.tag}`));
+            console.log(chalk.red(`✗ Usuário banido: ${member.user.tag}`));
             return { success: true };
         } catch (error) {
-            console.log(chalk.bgRed.white('[BAN DEBUG]') + chalk.red(` Erro: ${error.message}`));
-            console.log(chalk.gray(error.stack));
+            console.log(chalk.red(`✗ Erro ao banir: ${error.message}`));
             return { success: false, error: error.message };
         }
     }
@@ -696,7 +657,8 @@ class PunishmentManager {
                 results.errors.push(`Erro nos cargos: ${roleResult.error}`);
             }
             
-            if (warnCount === 2) {
+            // Envia DM para warn 2 e warn 3
+            if (warnCount === 2 || warnCount >= 3) {
                 const dmResult = await this.sendWarningDM(member, warnCount, lastWarnReason, lastWarnId);
                 if (dmResult.success) {
                     results.dmSent = true;
@@ -704,33 +666,23 @@ class PunishmentManager {
             }
             
             if (warnCount >= 3) {
-                console.log(chalk.bgRed.white('[DEBUG]') + chalk.red(' Entrou no if do ban!'));
-                console.log(chalk.yellow(`[DEBUG] Member: ${member.user.tag}`));
-                console.log(chalk.yellow(`[DEBUG] Member bannable: ${member.bannable}`));
-                
                 const banResult = await this.banMember(member, lastWarnReason, warnCount);
-                
-                console.log(chalk.yellow(`[DEBUG] Resultado do ban: ${JSON.stringify(banResult)}`));
-                
                 if (banResult.success) {
                     results.banned = true;
-                    console.log(chalk.bgGreen.white('[DEBUG]') + chalk.green(' Ban executado com sucesso!'));
                 } else {
                     results.errors.push(`Erro ao banir: ${banResult.error}`);
-                    console.log(chalk.bgRed.white('[DEBUG]') + chalk.red(` Falha no ban: ${banResult.error}`));
                 }
             }
             
             return results;
         } catch (error) {
-            console.log(chalk.bgRed.white('[DEBUG]') + chalk.red(` Erro no processamento: ${error.message}`));
             return { errors: [error.message] };
         }
     }
 }
 
 // ============================================
-// GERENCIADOR DE LOGS MELHORADO
+// GERENCIADOR DE LOGS
 // ============================================
 
 class LogManager {
@@ -751,7 +703,6 @@ class LogManager {
             this.logChannel = await this.client.channels.fetch(LOG_CHANNEL_ID);
             return this.logChannel;
         } catch (error) {
-            console.log(chalk.yellow(`⚠ Não foi possível obter canal de logs: ${error.message}`));
             return null;
         }
     }
@@ -821,11 +772,9 @@ class LogManager {
             embed.setFooter({ text: `${EMOJIS.BOT} Sistema de Moderação` }).setTimestamp();
 
             await logChannel.send({ embeds: [embed] });
-            console.log(chalk.blue(`[LOG] ${action} - ${user.tag} por ${staff.tag}`));
             return { success: true };
 
         } catch (error) {
-            console.log(chalk.red(`✗ Erro ao enviar log de moderação: ${error.message}`));
             return { success: false };
         }
     }
@@ -852,10 +801,7 @@ class LogManager {
             }
 
             await logChannel.send({ embeds: [embed] });
-            console.log(chalk.blue(`[LOG] Erro registrado: ${errorInfo.message}`));
-        } catch (error) {
-            console.log(chalk.red(`✗ Erro ao enviar log de erro: ${error.message}`));
-        }
+        } catch (error) {}
     }
 
     async sendSystemLog(message, type = 'INFO') {
@@ -881,14 +827,11 @@ class LogManager {
                 .setColor(colors[type] || '#3498DB')
                 .setTitle(`${icons[type] || 'ℹ️'} LOG DO SISTEMA`)
                 .setDescription(message)
-                .setFooter({ text: `${EMOJIS.BOT} ${formatDateBrazilian(new Date())}` })
+                .setFooter({ text: `${EMOJIS.BOT} Sistema` })
                 .setTimestamp();
 
             await logChannel.send({ embeds: [embed] });
-            console.log(chalk.blue(`[SYS] ${type}: ${message.substring(0, 100)}`));
-        } catch (error) {
-            console.log(chalk.red(`✗ Erro ao enviar log do sistema: ${error.message}`));
-        }
+        } catch (error) {}
     }
 
     getStatusEmoji(warnCount) {
@@ -950,7 +893,7 @@ const commands = [
 ];
 
 // ============================================
-// VERIFICAÇÃO DE PERMISSÃO STAFF - SIMPLIFICADA
+// VERIFICAÇÃO DE PERMISSÃO STAFF
 // ============================================
 
 async function checkStaffPermission(interaction) {
@@ -1035,7 +978,6 @@ async function checkBotPermissionsForAction(interaction, action) {
 
         return true;
     } catch (error) {
-        console.log(chalk.red(`✗ Erro ao verificar permissões do bot: ${error.message}`));
         return false;
     }
 }
@@ -1066,17 +1008,9 @@ async function handleWarnStats(interaction) {
         const warnIcon = getWarnLevelIcon(warnCount);
 
         let member = null;
-        let joinDate = null;
-        let roles = [];
         try {
             member = await memberCacheManager.getMember(interaction.guild.id, targetUser.id);
-            if (member) {
-                joinDate = member.joinedAt;
-                roles = member.roles.cache.filter(r => r.name !== '@everyone').map(r => r.toString()).slice(0, 5);
-            }
-        } catch (error) {
-            console.log(chalk.yellow(`⚠ Não foi possível buscar membro: ${error.message}`));
-        }
+        } catch (error) {}
 
         if (warnCount === 0) {
             const cleanEmbed = new EmbedBuilder()
@@ -1218,7 +1152,7 @@ async function handleAddWarn(interaction) {
             embedColor = '#E74C3C';
             embedTitle = `${EMOJIS.EMOJI_40} LIMITE MÁXIMO ATINGIDO - BANIMENTO`;
             embedDescription = `**${targetUser.tag}** atingiu o limite de 3 advertências`;
-            actionMessage = punishmentResults.banned ? '• Usuário BANIDO do servidor' : '• FALHA NO BANIMENTO - Verificar permissões do bot';
+            actionMessage = punishmentResults.banned ? '• Usuário BANIDO do servidor\n• DM de notificação enviada' : '• FALHA NO BANIMENTO - Verificar permissões do bot';
         }
 
         const responseEmbed = new EmbedBuilder()
@@ -1234,7 +1168,7 @@ async function handleAddWarn(interaction) {
                 { name: '📝 Motivo', value: fullReason.length > 100 ? fullReason.substring(0, 100) + '...' : fullReason, inline: false },
                 { name: '⚡ Ações', value: actionMessage, inline: false }
             )
-            .setFooter({ text: `${EMOJIS.BOT} ${formatDateBrazilian(new Date())}` })
+            .setFooter({ text: `${EMOJIS.BOT} Sistema de Moderação` })
             .setTimestamp();
 
         await interaction.reply({ embeds: [responseEmbed], flags: MessageFlags.Ephemeral });
@@ -1252,7 +1186,6 @@ async function handleAddWarn(interaction) {
             });
         }
 
-        // Invalidate member cache after adding warn
         memberCacheManager.invalidateMember(interaction.guild.id, targetUser.id);
 
     } catch (error) {
@@ -1261,7 +1194,7 @@ async function handleAddWarn(interaction) {
 }
 
 // ============================================
-// HANDLER DO COMANDO /removewarn - SIMPLIFICADO
+// HANDLER DO COMANDO /removewarn
 // ============================================
 
 async function handleRemoveWarn(interaction) {
@@ -1344,7 +1277,7 @@ async function handleRemoveWarn(interaction) {
                 { name: '⚠️ Warns Restantes', value: `${newWarnCount}/3`, inline: true },
                 { name: '📊 Status', value: statusMessage, inline: true }
             )
-            .setFooter({ text: `${EMOJIS.BOT} Remoção registrada em ${formatDateBrazilian(new Date())}` })
+            .setFooter({ text: `${EMOJIS.BOT} Sistema de Moderação` })
             .setTimestamp();
 
         await interaction.reply({ embeds: [responseEmbed], flags: MessageFlags.Ephemeral });
@@ -1356,7 +1289,6 @@ async function handleRemoveWarn(interaction) {
             removalReason: removalReason
         });
 
-        // Invalidate member cache after removing warn
         memberCacheManager.invalidateMember(interaction.guild.id, targetUser.id);
 
     } catch (error) {
@@ -1402,10 +1334,8 @@ async function registerGlobalCommands() {
         );
 
         console.log(chalk.green('✓ Comandos registrados com sucesso!'));
-        await logManager.sendSystemLog('Comandos slash registrados com sucesso!', 'SUCCESS');
     } catch (error) {
         console.log(chalk.red(`✗ Erro ao registrar comandos: ${error.message}`));
-        await logManager.sendSystemLog(`Erro ao registrar comandos: ${error.message}`, 'ERROR');
     }
 }
 
@@ -1432,8 +1362,7 @@ const errorHandler = new ErrorHandler(client, logManager);
 // Limpeza periódica do cache de membros
 setInterval(() => {
     memberCacheManager.clearCache();
-    console.log(chalk.gray('[Cache] Limpeza automática executada'));
-}, 30 * 60 * 1000); // 30 minutos
+}, 30 * 60 * 1000);
 
 client.once('ready', async () => {
     console.log(chalk.green(`\n✓ Bot online: ${client.user.tag}`));
@@ -1449,20 +1378,6 @@ client.once('ready', async () => {
     loadWarnsDatabase();
     await registerGlobalCommands();
     
-    // Verificar permissões do bot em todos os servidores
-    for (const guild of client.guilds.cache.values()) {
-        const perms = await punishmentManager.checkBotPermissions(guild);
-        console.log(chalk.gray(`  ${guild.name}: BanMembers=${botPermissions.hasBanMembers}, ManageRoles=${botPermissions.hasManageRoles}`));
-        
-        if (!botPermissions.hasBanMembers) {
-            console.log(chalk.yellow(`  ⚠ AVISO: Bot sem permissão de BANIR em ${guild.name}`));
-            await logManager.sendSystemLog(`Bot sem permissão de BANIR em ${guild.name}`, 'WARNING');
-        }
-        if (!botPermissions.hasManageRoles) {
-            console.log(chalk.yellow(`  ⚠ AVISO: Bot sem permissão de gerenciar cargos em ${guild.name}`));
-        }
-    }
-    
     client.user.setPresence({
         activities: [{
             name: `𝙼𝚊𝚍𝚎 𝙱𝚢 𝚈𝟸𝚔_𝙽𝚊𝚝`,
@@ -1472,7 +1387,6 @@ client.once('ready', async () => {
     });
     
     console.log(chalk.green('✓ Bot pronto!\n'));
-    await logManager.sendSystemLog('Bot iniciado e pronto para uso!', 'SUCCESS');
 });
 
 client.on('interactionCreate', handleInteraction);
@@ -1483,13 +1397,9 @@ client.on('guildMemberAdd', async (member) => {
         if (warns.length > 0) {
             await punishmentManager.applyWarnRole(member, warns.length);
             console.log(chalk.blue(`✓ Cargos restaurados: ${member.user.tag} (${warns.length} warns)`));
-            await logManager.sendSystemLog(`Cargos restaurados para ${member.user.tag} (${warns.length} warns)`, 'INFO');
         }
-        // Adicionar ao cache
         memberCacheManager.getMember(member.guild.id, member.id);
-    } catch (error) {
-        console.log(chalk.red(`✗ Erro ao restaurar cargos: ${error.message}`));
-    }
+    } catch (error) {}
 });
 
 // ============================================
@@ -1498,8 +1408,7 @@ client.on('guildMemberAdd', async (member) => {
 
 setInterval(() => {
     saveWarnsDatabase();
-    console.log(chalk.gray('[Backup] Banco de dados salvo automaticamente (8 horas)'));
-}, 28800000); // 8 horas em milissegundos
+}, 28800000);
 
 // ============================================
 // TRATAMENTO DE SINAIS DO SISTEMA
@@ -1508,7 +1417,6 @@ setInterval(() => {
 process.on('SIGINT', async () => {
     console.log(chalk.yellow('\n⚠ Salvando dados...'));
     saveWarnsDatabase();
-    await logManager.sendSystemLog('Bot encerrado via SIGINT', 'INFO');
     console.log(chalk.green('✓ Encerrando bot...\n'));
     process.exit(0);
 });
@@ -1516,21 +1424,17 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
     console.log(chalk.yellow('\n⚠ Salvando dados...'));
     saveWarnsDatabase();
-    await logManager.sendSystemLog('Bot encerrado via SIGTERM', 'INFO');
     console.log(chalk.green('✓ Encerrando bot...\n'));
     process.exit(0);
 });
 
 process.on('uncaughtException', async (error) => {
     console.log(chalk.red(`✗ Erro não tratado: ${error.message}`));
-    console.log(chalk.gray(error.stack));
-    await errorHandler.handleError(error, { type: 'uncaughtException' });
     saveWarnsDatabase();
 });
 
 process.on('unhandledRejection', async (reason) => {
     console.log(chalk.red(`✗ Promise rejeitada: ${reason}`));
-    await errorHandler.handleError(new Error(String(reason)), { type: 'unhandledRejection' });
     saveWarnsDatabase();
 });
 
@@ -1540,9 +1444,8 @@ process.on('unhandledRejection', async (reason) => {
 
 console.log(chalk.blue('\n✓ Iniciando bot...\n'));
 
-client.login(TOKEN).catch(async error => {
+client.login(TOKEN).catch(error => {
     console.log(chalk.red(`✗ Falha no login: ${error.message}`));
-    await errorHandler.handleError(error, { type: 'login' });
     process.exit(1);
 });
 
