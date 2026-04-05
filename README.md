@@ -95,13 +95,6 @@ Ele elimina o trabalho manual e transforma a moderação em algo rápido, organi
 
 ✦ 𝚂𝚃𝙰𝙵𝙵 𝙿𝙴𝚁𝙼𝙸𝚂𝚂𝙸𝙾𝙽𝚂
 
-STAFF_ROLES = [
-  "1392306046655008891",
-  "1392306043215679599",
-  "1392306051415539774"
-]
-
-
 ---
 
 ✦ 𝙵𝙻𝙾𝚆 𝚂𝚈𝚂𝚃𝙴𝙼
