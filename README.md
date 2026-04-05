@@ -1,170 +1,131 @@
-🛡️ HostVille Bot - Sistema Avançado de Moderação
+<p align="center">
+  <img src="https://img.sanishtech.com/u/c788a601e91b29055a60cbcf765469bf.png" alt="Warn Bot Banner" width="100%">
+</p>
 
-"Node.js" (https://img.shields.io/badge/Node.js-18+-green?style=flat-square&logo=node.js)
-"discord.js" (https://img.shields.io/badge/discord.js-v14-blue?style=flat-square&logo=discord)
-"Status" (https://img.shields.io/badge/status-online-brightgreen?style=flat-square)
-"License" (https://img.shields.io/badge/license-MIT-yellow?style=flat-square)
-"Version" (https://img.shields.io/badge/version-2.0.0-orange?style=flat-square)
+<p align="center">
+  <img src="https://img.shields.io/badge/version-1.0.0-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/node-16.9%2B-green.svg" alt="Node.js">
+  <img src="img.shields.io/badge/discord.js-v14.14.1-blue.svg" alt="Discord.js">
+  <img src="img.shields.io/badge/license-MIT-green.svg" alt="License">
+  <img src="img.shields.io/badge/status-online-brightgreen.svg" alt="Status">
+  <img src="img.shields.io/badge/warns%20system-complete-orange.svg" alt="Warn System">
+</p>
 
-«⚡ Bot de moderação profissional para Discord com sistema de warns, punições automáticas, logs completos e interface moderna.»
+# 🛡️ Warn System Bot - Sistema Completo de Moderação
 
----
-
-📌 Sobre o Projeto
-
-O HostVille Bot é um sistema completo de moderação desenvolvido em Node.js com discord.js v14, focado em desempenho, organização e controle total da staff.
-
-🔥 O que ele oferece:
-
-- ⚠️ Sistema avançado de warns com ID único
-- 🎯 Punições automáticas configuradas
-- 🎨 Embeds profissionais e padronizados
-- 📩 Avisos automáticos via DM
-- 📜 Sistema de logs em canal
-- 🖥️ Console colorido com debug avançado
-- 🔒 Controle de permissões por cargo
+**Versão 1.0.0** - Bot de moderação avançado para Discord com sistema completo de warns, punições automáticas e logs de staff.
 
 ---
 
-🚀 Funcionalidades Principais
+## 📋 Sobre o Projeto
 
-🛡️ Moderação| ⚠️ Warn System| 📊 Logs
-Sistema automatizado| IDs únicos| Canal dedicado
-Controle por staff| Punições automáticas| Embeds organizados
+O **Warn System Bot** é um sistema de moderação robusto desenvolvido em **Node.js** com **discord.js v14**, focado em controle de advertências (warns) e automação de punições dentro de servidores Discord.
 
-🎨 Interface| 🖥️ Console| 🔐 Segurança
-Embeds profissionais| Logs coloridos| Controle por cargo
-Cores dinâmicas| Debug detalhado| Anti-abuso básico
+Ele foi projetado para substituir sistemas manuais de moderação, trazendo automação, organização e segurança.
 
 ---
 
-⚙️ Sistema de Warns
+## 🚀 Funcionalidades Principais
 
-📊 Regras
+<table>
+  <tr>
+    <td align="center" width="33%">
+      ⚠️ <br>
+      <strong>Sistema de Warns</strong>
+      <br>
+      <sub>Banco de dados local com histórico completo de advertências</sub>
+    </td>
+    <td align="center" width="33%">
+      🛡️ <br>
+      <strong>Punições Automáticas</strong>
+      <br>
+      <sub>Aplicação automática de cargos e expulsão no limite</sub>
+    </td>
+    <td align="center" width="33%">
+      📜 <br>
+      <strong>Sistema de Logs</strong>
+      <br>
+      <sub>Registro completo de ações de staff em canal dedicado</sub>
+    </td>
+  </tr>
 
-Warns| Ação
-🟡 1 Warn| Cargo "WARN_1"
-🔴 2 Warns| Remove "WARN_1" + aplica "WARN_2" + DM
-⚫ 3 Warns| Remove cargos + KICK imediato
-
----
-
-🎨 Sistema Visual
-
-Estado| Cor
-🟢 Sem warns| Verde
-🟡 1 warn| "#F1C40F"
-🔴 2 warns| "#E74C3C"
-⚫ 3 warns| "#2C2F33"
-
-✔ Embeds sempre organizados
-✔ Avatar do usuário incluído
-✔ "/warnstats" privado (ephemeral)
-
----
-
-📜 Comandos
-
-/warnstats   → Ver warns (privado)
-/addwarn     → Adicionar warn (staff)
-/removewarn  → Remover warn (staff)
-
----
-
-📁 Configuração (.env)
-
-TOKEN=seu_token
-CLIENT_ID=seu_client_id
-
-STAFF_ROLE_ID=id_staff
-
-WARN_1=id_warn1
-WARN_2=id_warn2
-WARN_3=id_warn3
-
-LOG_CHANNEL_ID=id_logs
-
----
-
-📦 Instalação
-
-npm init -y
-npm install discord.js dotenv chalk
+  <tr>
+    <td align="center">
+      📩 <br>
+      <strong>DM Automática</strong>
+      <br>
+      <sub>Notificação automática para usuários punidos</sub>
+    </td>
+    <td align="center">
+      👮 <br>
+      <strong>Controle de Staff</strong>
+      <br>
+      <sub>Permissões baseadas em cargos configuráveis</sub>
+    </td>
+    <td align="center">
+      💾 <br>
+      <strong>Persistência de Dados</strong>
+      <br>
+      <sub>Armazenamento em JSON com backup automático</sub>
+    </td>
+  </tr>
+</table>
 
 ---
 
-🚀 Execução
+## ⚙️ Sistema de Punições
 
-node index.js
+O bot funciona com base em níveis de advertência:
 
----
-
-📊 Sistema de Logs
-
-Todos os eventos são enviados para o canal:
-
-LOG_CHANNEL_ID
-
-Inclui:
-
-- 👤 Usuário
-- 🛡️ Staff
-- ⚙️ Ação
-- ⚠️ Warns
-- 🆔 ID do warn
+| Nível | Ação |
+|------|------|
+| 1 Warn | Aplicação de cargo WARN_1 |
+| 2 Warns | Cargo WARN_2 + aviso por DM |
+| 3 Warns | Cargo WARN_3 + expulsão automática |
 
 ---
 
-🖥️ Console (Debug)
+## 🧠 Comandos Disponíveis
 
-Tipo| Cor
-🔵 INFO| Informações
-🟢 SUCESSO| Ações concluídas
-🟡 AVISO| Alertas
-🔴 ERRO| Falhas
-⚠️ PERMISSÃO| Problemas de permissão
+### `/warnstats`
+Exibe o histórico completo de advertências de um usuário.
 
----
-
-⚠️ Regras do Sistema
-
-- ❌ Não permite warns negativos
-- 🤖 Não permite warn em bots
-- 🔁 Atualização automática de cargos
-- 🚫 Nunca acumula múltiplos cargos
+- 📊 Total de warns
+- 📝 Lista detalhada
+- 🎯 Status atual
 
 ---
 
-🧠 Tecnologias Utilizadas
+### `/addwarn`
+Adiciona uma advertência a um usuário.
 
-Tecnologia| Uso
-Node.js| Runtime
-discord.js v14| API do Discord
-dotenv| Variáveis de ambiente
-chalk| Console colorido
-
----
-
-🚧 Roadmap
-
-- 💾 Banco de dados (MongoDB)
-- 📜 Histórico completo
-- 📊 Dashboard web
-- 🔄 Backup automático
-- ⏱️ Expiração de warns
+**Funções:**
+- Registro de motivo
+- ID único do warn
+- Aplicação automática de punições
+- Log em canal de staff
 
 ---
 
-👑 Autor
+### `/removewarn`
+Remove a última advertência de um usuário.
 
-Projeto desenvolvido para sistemas profissionais de moderação no Discord.
+**Funções:**
+- Atualiza histórico
+- Recalcula nível
+- Remove cargos se necessário
+- Registra no log
 
 ---
 
-📌 Observação
+## 🔐 Sistema de Permissões
 
-«Comandos globais podem demorar alguns minutos para aparecer.»
+### 👮 Staff Roles
+Somente usuários com os cargos configurados podem usar comandos:
 
----
-
-🔥 Sistema pronto para servidores grandes e organizados
+```js
+STAFF_ROLES = [
+  "1392306046655008891",
+  "1392306043215679599",
+  "1392306051415539774"
+];
