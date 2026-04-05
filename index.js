@@ -1,8 +1,3 @@
-// ============================================
-// DISCORD WARN BOT - SISTEMA COMPLETO DE MODERAÇÃO
-// discord.js v14.14.1
-// ============================================
-
 require('dotenv').config();
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, PermissionsBitField, MessageFlags } = require('discord.js');
 const chalk = require('chalk');
