@@ -1180,7 +1180,7 @@ const warnManager = new WarnManager(client);
 const punishmentManager = new PunishmentManager(client, warnManager);
 const logManager = new LogManager(client);
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
     console.log(chalk.green(`\n✓ Bot online: ${client.user.tag}`));
     console.log(chalk.gray(`✓ Servidores: ${client.guilds.cache.size}`));
     
