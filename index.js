@@ -1271,14 +1271,30 @@ client.once('clientReady', async () => {
     
     loadWarnsDatabase();
     await registerGlobalCommands();
-    
-    client.user.setPresence({
-        activities: [{
-            name: `𝙼𝚊𝚍𝚎 𝙱𝚢 𝚈𝟸𝚔_𝙽𝚊𝚝`,
-            type: 1
-        }],
-        status: 'online'
-    });
+
+    // ===============================
+    // STATUS
+    // ===============================
+    const activities = [
+        { name: '𝙼𝚊𝚍𝚎 𝚋𝚢 𝚈𝟸𝚔_𝙽𝚊𝚝', type: 2 },
+        { name: 'Sistema de Warns Ativo', type: 2 }
+    ];
+
+    let index = 0;
+
+    setInterval(() => {
+        const activity = activities[index % activities.length];
+
+        client.user.setPresence({
+            activities: [{
+                name: activity.name,
+                type: activity.type
+            }],
+            status: 'online'
+        });
+
+        index++;
+    }, 10000);
     
     console.log(chalk.green('✓ Bot pronto!\n'));
 });
