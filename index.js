@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 // ============================================
-// EMOJIS PERSONALIZADOS (COMO TEXTO)
+// EMOJIS PERSONALIZADOS
 // ============================================
 
 const EMOJIS = {
