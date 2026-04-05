@@ -8,116 +8,43 @@
   <img src="https://img.shields.io/badge/discord.js-v14.14.0-blue.svg" alt="Discord.js">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
   <img src="https://img.shields.io/badge/status-online-brightgreen.svg" alt="Status">
-  </p>
+</p>
 
-# 🛡️ Warn System Bot - Sistema Completo de Moderação
+<h1 align="center">🛡️ Warn System Bot</h1>
 
-**Versão 1.0.0** - Bot de moderação avançado para Discord com sistema completo de warns, punições automáticas e logs de staff.
+<p align="center">
+Bot de moderação avançado para Discord com sistema completo de warns, punições automáticas e logs de staff.
+</p>
 
 ---
 
 ## 📋 Sobre o Projeto
 
-O **Warn System Bot** é um sistema de moderação robusto desenvolvido em **Node.js** com **discord.js v14**, focado em controle de advertências (warns) e automação de punições dentro de servidores Discord.
+O **Warn System Bot** é um sistema completo de moderação desenvolvido em **Node.js** com **discord.js v14**, focado no gerenciamento de advertências (warns) dentro de servidores Discord.
 
-Ele foi projetado para substituir sistemas manuais de moderação, trazendo automação, organização e segurança.
+Ele automatiza todo o processo de moderação, reduzindo trabalho manual da staff e garantindo organização, consistência e segurança.
 
 ---
 
-## 🚀 Funcionalidades Principais
+## ✨ Funcionalidades
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      ⚠️ <br>
-      <strong>Sistema de Warns</strong>
-      <br>
-      <sub>Banco de dados local com histórico completo de advertências</sub>
-    </td>
-    <td align="center" width="33%">
-      🛡️ <br>
-      <strong>Punições Automáticas</strong>
-      <br>
-      <sub>Aplicação automática de cargos e expulsão no limite</sub>
-    </td>
-    <td align="center" width="33%">
-      📜 <br>
-      <strong>Sistema de Logs</strong>
-      <br>
-      <sub>Registro completo de ações de staff em canal dedicado</sub>
-    </td>
-  </tr>
+<p align="center">Sistema moderno, automático e altamente configurável</p>
 
-  <tr>
-    <td align="center">
-      📩 <br>
-      <strong>DM Automática</strong>
-      <br>
-      <sub>Notificação automática para usuários punidos</sub>
-    </td>
-    <td align="center">
-      👮 <br>
-      <strong>Controle de Staff</strong>
-      <br>
-      <sub>Permissões baseadas em cargos configuráveis</sub>
-    </td>
-    <td align="center">
-      💾 <br>
-      <strong>Persistência de Dados</strong>
-      <br>
-      <sub>Armazenamento em JSON com backup automático</sub>
-    </td>
-  </tr>
-</table>
+| ⚠️ Sistema de Warns | 🛡️ Punições Automáticas | 📜 Logs de Staff |
+|---------------------|--------------------------|------------------|
+| Histórico completo de advertências por usuário | Cargos automáticos por nível de warn | Registro de todas ações da staff |
+
+| 📩 DM Automática | 👮 Controle de Staff | 💾 Banco de Dados |
+|-----------------|------------------------|------------------|
+| Notificações automáticas para usuários punidos | Sistema de permissões por cargos | Armazenamento em JSON com persistência |
 
 ---
 
 ## ⚙️ Sistema de Punições
 
-O bot funciona com base em níveis de advertência:
+O bot utiliza um sistema progressivo de punições:
 
-| Nível | Ação |
-|------|------|
-| 1 Warn | Aplicação de cargo WARN_1 |
-| 2 Warns | Cargo WARN_2 + aviso por DM |
-| 3 Warns | Cargo WARN_3 + expulsão automática |
-
----
-
-## 🧠 Comandos Disponíveis
-
-### `/warnstats`
-Exibe o histórico completo de advertências de um usuário.
-
-- 📊 Total de warns
-- 📝 Lista detalhada
-- 🎯 Status atual
-
----
-
-### `/addwarn`
-Adiciona uma advertência a um usuário.
-
-**Funções:**
-- Registro de motivo
-- ID único do warn
-- Aplicação automática de punições
-- Log em canal de staff
-
----
-
-### `/removewarn`
-Remove a última advertência de um usuário.
-
-**Funções:**
-- Atualiza histórico
-- Recalcula nível
-- Remove cargos se necessário
-- Registra no log
-
----
-
-## 🔐 Sistema de Permissões
-
-### 👮 Staff Roles
-Somente usuários com os cargos configurados podem usar comandos.
+```txt
+1 Warn  → Cargo WARN_1
+2 Warns → Cargo WARN_2 + DM automática
+3 Warns → Cargo WARN_3 + Expulsão do servidor
