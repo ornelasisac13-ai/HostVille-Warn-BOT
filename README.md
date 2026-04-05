@@ -138,9 +138,10 @@ D -->|3| G[WARN_3 + KICK]
 
 ---
 
-<br><p align="center">
-  <b>🟢 ONLINE • ⚡ STABLE • 🔒 SECURE</b>
-</p><br><p align="center">
-  <b>𝙼𝚊𝚍𝚎 𝙱𝚢 𝚈𝟸𝚔_𝙽𝚊𝚝</b>
-</p>
+📌 Status
+�
+🟢 Online • ⚡ Estável • 🔒 Seguro 
+
+�
+𝙼𝚊𝚍𝚎 𝙱𝚢 𝚈𝟸𝚔_𝙽𝚊𝚝 
 ```
