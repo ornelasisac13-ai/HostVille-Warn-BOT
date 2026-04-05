@@ -121,11 +121,4 @@ Remove a última advertência de um usuário.
 ## 🔐 Sistema de Permissões
 
 ### 👮 Staff Roles
-Somente usuários com os cargos configurados podem usar comandos:
-
-```js
-STAFF_ROLES = [
-  "1392306046655008891",
-  "1392306043215679599",
-  "1392306051415539774"
-];
+Somente usuários com os cargos configurados podem usar comandos.
