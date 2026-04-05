@@ -48,5 +48,3 @@ O bot utiliza um sistema progressivo de punições:
 1 Warn  → Cargo WARN_1
 2 Warns → Cargo WARN_2 + DM automática
 3 Warns → Cargo WARN_3 + Expulsão do servidor
-</p>
-**𝙼𝚊𝚍𝚎 𝙱𝚢 𝚈𝟸𝚔_𝙽𝚊𝚝**
