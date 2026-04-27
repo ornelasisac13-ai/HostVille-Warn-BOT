@@ -98,7 +98,7 @@ Ele elimina o trabalho manual e transforma a moderação em algo rápido, organi
 ---
 
 ✦ 𝙵𝙻𝙾𝚆 𝚂𝚈𝚂𝚃𝙴𝙼
-
+```
 flowchart TD
 A[Warn aplicado] --> B[Salvo no JSON]
 B --> C[Atualiza contagem]
@@ -106,7 +106,7 @@ C --> D{Level}
 D -->|1| E[WARN_1]
 D -->|2| F[WARN_2 + DM]
 D -->|3| G[WARN_3 + KICK]
-
+```
 
 ---
 
