@@ -50,7 +50,7 @@ Ele permite que usuários avaliem a equipe com notas e comentários, gerando mé
 
 ✦ 𝚂𝚈𝚂𝚃𝙴𝙼 𝙵𝙻𝙾𝚆
 
-```mermaid
+
 sequenceDiagram
     participant U as Usuário (comum)
     participant B as Bot
@@ -72,7 +72,6 @@ sequenceDiagram
         B->>B: Recalcula ranking semanal
         B-->>U: Confirmação ephemeral
     end
-```
 
 ---
 
