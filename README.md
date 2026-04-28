@@ -13,7 +13,7 @@
 
 <br>
 
-<h1 align="center">⚠️ 𝙷𝚘𝚜𝚝𝚅𝚒𝚕𝚕𝚎 𝚆𝚊𝚛𝚗 • 𝙱𝙾𝚃</h1>
+<h1 align="center"> 𝙷𝚘𝚜𝚝𝚅𝚒𝚕𝚕𝚎 𝚆𝚊𝚛𝚗 • 𝙱𝙾𝚃</h1>
 
 <p align="center">
   Sistema de advertências com 3 níveis, cargos automáticos, DM de alerta e banimento automático.
